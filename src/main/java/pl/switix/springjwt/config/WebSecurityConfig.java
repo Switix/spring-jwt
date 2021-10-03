@@ -7,16 +7,21 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import pl.switix.springjwt.filter.JwtFilter;
 
 @Configuration
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     UserDetailsService userDetailsService;
+    JwtFilter jwtFilter;
 
     @Autowired
-    public WebSecurityConfig(UserDetailsService userDetailsService){
+    public WebSecurityConfig(UserDetailsService userDetailsService, JwtFilter jwtFilter) {
         this.userDetailsService = userDetailsService;
+        this.jwtFilter = jwtFilter;
     }
 
     @Override
@@ -29,7 +34,12 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         http.csrf().disable();
         http.authorizeRequests()
                 .antMatchers("/authenticate").permitAll()
-                .anyRequest().authenticated();
+                .antMatchers("/test-admin").hasRole("ADMIN")
+                .antMatchers("/test-user").hasRole("USER")
+                .anyRequest().authenticated()
+                .and()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
     }
 

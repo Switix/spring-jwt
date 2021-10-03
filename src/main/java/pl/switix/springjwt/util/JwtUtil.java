@@ -2,16 +2,10 @@ package pl.switix.springjwt.util;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.JWTDecodeException;
-import com.auth0.jwt.impl.ClaimsHolder;
-import com.auth0.jwt.impl.JWTParser;
-import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.auth0.jwt.interfaces.JWTVerifier;
 import org.springframework.stereotype.Service;
 import pl.switix.springjwt.entity.AppUser;
 
-import javax.xml.bind.DatatypeConverter;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,7 +16,7 @@ import java.util.function.Function;
 public class JwtUtil {
 
     private static final String SECRET_KEY = "zaq1@WSX";
-    byte[] apiKeySecretBytes = DatatypeConverter.parseBase64Binary(SECRET_KEY);
+    private static final Algorithm ALGORITHM = Algorithm.HMAC256(SECRET_KEY);
 
     public <T> T extractClaim(String token, Function<DecodedJWT, T> claimResolver) {
         final DecodedJWT claims = JWT.decode(token);
@@ -45,16 +39,17 @@ public class JwtUtil {
                 .withPayload(claims)
                 .withSubject(subject)
                 .withIssuedAt(new Date(System.currentTimeMillis()))
-                .withExpiresAt(new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(10)))
-                .sign(Algorithm.HMAC256(apiKeySecretBytes));
+                .withExpiresAt(new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(10)))
+                .sign(ALGORITHM);
     }
 
 
-    private String extractUsername(String token) {
-        return extractClaim(token,DecodedJWT::getSubject);
+    public String extractUsername(String token) {
+        return extractClaim(token, DecodedJWT::getSubject);
     }
+
     private Date extractExpiration(String token) {
-        return extractClaim(token,DecodedJWT::getExpiresAt);
+        return extractClaim(token, DecodedJWT::getExpiresAt);
     }
 
     private boolean isTokenExpired(String token) {
